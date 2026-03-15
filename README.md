@@ -1,160 +1,142 @@
 # 家計簿アプリ
 
-マルチテナント型家計簿アプリ。Next.js (Vercel) + Rust/Axum (Railway) + Supabase (PostgreSQL) 構成。
+マルチテナント型家計簿。**Vercel + Supabase だけで完結**するシンプル構成。
+
+```
+ブラウザ
+  └─ Next.js (Vercel)
+       ├─ フロントエンド (App Router)
+       └─ バックエンド   (API Routes /api/v1/...)
+            └─ Supabase PostgreSQL
+```
 
 ---
 
-## 全体構成
+## デプロイ手順
 
-```
-moneyForward/
-├── db/          SQL スキーマ (Supabase で実行)
-├── backend/     Rust/Axum API サーバ (Railway にデプロイ)
-└── frontend/    Next.js フロントエンド (Vercel にデプロイ)
-```
+### Step 1: Supabase セットアップ
 
-デプロイの順番は **Supabase → Railway → Vercel** の順に行う。
+#### 1-1. プロジェクト作成
 
----
-
-## Step 1: Supabase セットアップ
-
-### 1-1. プロジェクト作成
-
-1. [supabase.com](https://supabase.com) にログイン
+1. [supabase.com](https://supabase.com) にアクセスしてログイン
 2. **New project** をクリック
-3. プロジェクト名・パスワード・リージョン (Tokyo 推奨) を入力して作成
+3. プロジェクト名・DB パスワード・リージョン (Northeast Asia - Tokyo) を入力して作成
+4. プロジェクトが起動するまで 1〜2 分待つ
 
-### 1-2. SQL の実行
+#### 1-2. SQL の実行
 
-Supabase ダッシュボード左メニューの **SQL Editor** を開き、以下の順番でファイルの内容を貼り付けて実行する。
+ダッシュボード左メニュー **SQL Editor** を開き、以下のファイルを**順番に**貼り付けて実行する。
 
 | 順番 | ファイル | 内容 |
 |------|----------|------|
-| 1 | `db/01_roles.sql` | ロール作成 |
-| 2 | `db/02_tables.sql` | テーブル作成 |
-| 3 | `db/03_rls.sql` | RLS ポリシー |
-| 4 | `db/04_grants.sql` | 権限付与 |
+| 1 | `db/01_roles.sql` | `app_user` / `app_admin` ロール作成 |
+| 2 | `db/02_tables.sql` | 4テーブル作成 |
+| 3 | `db/03_rls.sql` | 行レベルセキュリティ設定 |
+| 4 | `db/04_grants.sql` | ロール別権限付与 |
 
-### 1-3. 接続文字列の取得
+> 各ファイルを開いて内容を全選択 → SQL Editor に貼り付け → **RUN** をクリック。
 
-**Settings → Database → Connection string → URI** をコピーする。
+#### 1-3. 接続文字列を取得
+
+左メニュー **Settings → Database** を開く。
+
+**Connection string** セクションの **URI** タブを選択し、表示される文字列をコピーする。
 
 ```
-postgresql://postgres:<password>@db.<project-ref>.supabase.co:5432/postgres
+# ポート 6543 (PgBouncer) の URI を使うこと
+postgresql://postgres.<project-ref>:<your-password>@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres
 ```
 
-> パスワードはプロジェクト作成時に設定したもの。
+> ⚠️ ポートが **5432** のものではなく **6543** (Transaction mode) を選ぶと Vercel サーバーレスで安定する。
 
 ---
 
-## Step 2: Railway (Rust バックエンド) デプロイ
+### Step 2: Vercel デプロイ
 
-### 2-1. Railway プロジェクト作成
+#### 2-1. プロジェクトをインポート
 
-1. [railway.app](https://railway.app) にログインし **New Project** をクリック
-2. **Deploy from GitHub repo** を選択してこのリポジトリを接続
+1. [vercel.com](https://vercel.com) にログイン
+2. **Add New → Project** をクリック
+3. このリポジトリを選択して **Import**
 
-### 2-2. Root Directory の設定
+#### 2-2. Root Directory を設定 (重要)
 
-Railway ダッシュボードでサービスを選択し、**Settings → Source → Root Directory** に `backend` を入力する。
+**Configure Project** 画面の **Root Directory** 欄にある **Edit** をクリックし、`frontend` と入力する。
 
-### 2-3. 環境変数の設定
+```
+Root Directory: frontend    ← ここ
+```
 
-Railway ダッシュボードの **Variables** に以下を追加する。
+> これを設定しないと Vercel がリポジトリルートを Next.js プロジェクトとして認識できない。
+
+#### 2-3. 環境変数を設定
+
+同じ画面の **Environment Variables** に以下の 2 つを追加する。
 
 | 変数名 | 値 |
 |--------|----|
 | `DATABASE_URL` | Step 1-3 でコピーした接続文字列 |
-| `JWT_SECRET` | ランダムな長い文字列 (32文字以上推奨) |
-| `PORT` | `8080` |
-| `RUST_LOG` | `info` |
+| `JWT_SECRET` | ランダムな文字列 (32 文字以上) |
 
-### 2-4. デプロイ確認
+> `JWT_SECRET` の生成例:
+> ```bash
+> openssl rand -base64 32
+> ```
 
-Railway がビルドを開始する。ログに `listening on 0.0.0.0:8080` が表示されれば成功。
+#### 2-4. デプロイ
 
-**Settings → Networking → Public Networking** でドメインを発行し、URL をメモしておく。
+**Deploy** ボタンをクリック。ビルドが完了すると URL が発行される。
 
 ```
-例: https://money-forward-api-production.up.railway.app
+https://<your-project>.vercel.app
 ```
 
----
-
-## Step 3: Vercel (Next.js フロントエンド) デプロイ
-
-### 3-1. Vercel プロジェクト作成
-
-1. [vercel.com](https://vercel.com) にログインし **Add New → Project** をクリック
-2. このリポジトリをインポート
-
-### 3-2. Root Directory の設定 (重要)
-
-**Configure Project** 画面で **Root Directory** の **Edit** をクリックし、`frontend` を入力する。
-
-> `vercel.json` はリポジトリルートに置いてあるが、`rootDirectory` はダッシュボードで設定する必要がある。
-
-### 3-3. 環境変数の設定
-
-同画面の **Environment Variables** に以下を追加する。
-
-| 変数名 | 値 |
-|--------|----|
-| `NEXT_PUBLIC_API_URL` | Step 2-4 でメモした Railway の URL |
-
-### 3-4. デプロイ
-
-**Deploy** ボタンをクリック。ビルドが完了すると `https://<your-project>.vercel.app` が発行される。
+以上でデプロイ完了。
 
 ---
 
 ## ローカル開発
 
-### 前提
-
-- Rust (1.79 以上)
-- Node.js (20 以上)
-- Docker (任意・ローカル DB 用)
-
-### バックエンド起動
-
 ```bash
-cd backend
-cp .env.example .env
-# .env の DATABASE_URL と JWT_SECRET を編集する
-
-cargo run --bin server
-# → http://localhost:8080
-```
-
-### フロントエンド起動
-
-```bash
+# 1. 依存インストール
 cd frontend
-cp .env.local.example .env.local
-# .env.local の NEXT_PUBLIC_API_URL を確認 (デフォルト: http://localhost:8080)
-
 npm install
+
+# 2. 環境変数を設定
+cp .env.local.example .env.local
+# → .env.local を開いて DATABASE_URL と JWT_SECRET を記入
+
+# 3. 起動
 npm run dev
 # → http://localhost:3000
 ```
 
 ---
 
-## DB カラム規約
-
-| 規約 | 内容 |
-|------|------|
-| テーブル名 | `TBL_` で始まる 9 文字固定 |
-| カラム名 | 小文字 5 文字固定、アンダースコア不使用 |
-| PK | `objid` (UUID) |
+## プロジェクト構成
 
 ```
-TBL_USERS : objid, email, roles, ctime
-TBL_CATEG : objid, ownid, cname, ctype, ctime
-TBL_TRANS : objid, ownid, catid, amnts, dates, ctime
-TBL_AUDIT : objid, ownid, actio, ctime
+moneyForward/
+├── db/                        Supabase で実行する SQL
+│   ├── 01_roles.sql
+│   ├── 02_tables.sql
+│   ├── 03_rls.sql
+│   └── 04_grants.sql
+├── backend/                   Rust/Axum 実装 (参考・使用しない)
+└── frontend/                  Next.js アプリ (Vercel にデプロイ)
+    ├── src/
+    │   ├── app/
+    │   │   ├── api/v1/        API Routes (バックエンド)
+    │   │   │   └── transactions/
+    │   │   └── dashboard/     フロントエンド画面
+    │   ├── lib/
+    │   │   ├── db.ts          PostgreSQL 接続
+    │   │   ├── auth.ts        JWT 検証
+    │   │   ├── audit.ts       監査ログ (withAudit)
+    │   │   └── errors.ts      エラーレスポンス
+    │   └── types/
+    │       └── bindings.ts    Rust から ts-rs で生成した型定義
+    └── .env.local.example     環境変数テンプレート
 ```
 
 ---
@@ -163,9 +145,27 @@ TBL_AUDIT : objid, ownid, actio, ctime
 
 ```
 リクエスト
-  └─ JWT 検証 (Axum middleware)
-       └─ SET LOCAL ROLE app_user|app_admin     ← RBAC
-            └─ SET LOCAL app.current_user_id    ← RLS へ注入
-                 └─ SQL 実行 (RLS が自動フィルタ) ← 行レベル隔離
-                      └─ TBL_AUDIT INSERT       ← 監査ログ (同一トランザクション)
+  └─ JWT 検証 (src/lib/auth.ts)
+       └─ withAudit() が PostgreSQL トランザクションを開く
+            ├─ SET LOCAL ROLE app_user|app_admin   ← RBAC
+            ├─ set_config('app.current_user_id')   ← RLS へ注入
+            ├─ SQL 実行 (RLS が ownid で自動フィルタ)
+            └─ TBL_AUDIT INSERT (同一トランザクション = 原子性)
+```
+
+---
+
+## DB カラム規約
+
+| 規約 | 詳細 |
+|------|------|
+| テーブル名 | `TBL_` で始まる 9 文字固定 |
+| カラム名 | 小文字 5 文字固定・アンダースコア不使用 |
+| PK | `objid` (UUID) |
+
+```
+TBL_USERS : objid  email  roles  ctime
+TBL_CATEG : objid  ownid  cname  ctype  ctime
+TBL_TRANS : objid  ownid  catid  amnts  dates  ctime
+TBL_AUDIT : objid  ownid  actio  ctime
 ```
