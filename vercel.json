@@ -2,9 +2,5 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "installCommand": "npm install",
-  "framework": "nextjs",
-  "rootDirectory": "frontend",
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@api_url"
-  }
+  "framework": "nextjs"
 }
