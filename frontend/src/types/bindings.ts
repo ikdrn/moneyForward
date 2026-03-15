@@ -6,14 +6,14 @@
 export type UserRole = "app_user" | "app_admin";
 
 export interface User {
-  id___: string;    // UUID
+  objid: string;    // UUID
   email: string;
-  role_: UserRole;
+  roles: UserRole;
   ctime: string;    // ISO 8601
 }
 
 export interface Category {
-  id___: string;
+  objid: string;
   ownid: string;
   cname: string;
   ctype: "income" | "expense";
@@ -21,7 +21,7 @@ export interface Category {
 }
 
 export interface Transaction {
-  id___: string;
+  objid: string;
   ownid: string;
   catid: string;
   amnts: string;    // Decimal → string (精度保持)
@@ -30,7 +30,7 @@ export interface Transaction {
 }
 
 export interface AuditLog {
-  id___: string;
+  objid: string;
   ownid: string | null;
   actio: string;
   ctime: string;

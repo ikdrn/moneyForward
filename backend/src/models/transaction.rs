@@ -9,7 +9,7 @@ use validator::Validate;
 #[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow)]
 #[ts(export)]
 pub struct Transaction {
-    pub id___: Uuid,
+    pub objid: Uuid,
     pub ownid: Uuid,
     pub catid: Uuid,
     #[ts(type = "string")]

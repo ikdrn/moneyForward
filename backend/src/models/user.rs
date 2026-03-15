@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 use uuid::Uuid;
 
-/// DB ロール (TBL_USERS.role_ と一致)
+/// DB ロール (TBL_USERS.roles と一致)
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "snake_case")]
 #[ts(export)]
@@ -28,8 +28,8 @@ impl UserRole {
 #[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow)]
 #[ts(export)]
 pub struct User {
-    pub id___: Uuid,
+    pub objid: Uuid,
     pub email: String,
-    pub role_: String,
+    pub roles: String,
     pub ctime: DateTime<Utc>,
 }

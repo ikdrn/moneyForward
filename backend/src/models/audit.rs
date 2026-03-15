@@ -7,7 +7,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow)]
 #[ts(export)]
 pub struct AuditLog {
-    pub id___: Uuid,
+    pub objid: Uuid,
     pub ownid: Option<Uuid>,
     pub actio: String,
     pub ctime: DateTime<Utc>,

@@ -39,7 +39,7 @@ DROP POLICY IF EXISTS users_admin_all    ON TBL_USERS;
 -- 自分のレコードのみ参照可
 CREATE POLICY users_self_select ON TBL_USERS
   FOR SELECT TO app_user
-  USING (id___ = current_user_id());
+  USING (objid = current_user_id());
 
 -- 管理者は全レコード参照可
 CREATE POLICY users_admin_all ON TBL_USERS

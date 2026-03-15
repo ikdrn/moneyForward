@@ -38,10 +38,10 @@ export default function DashboardPage() {
           </thead>
           <tbody>
             {(transactions ?? []).map((t) => {
-              const cat = (categories ?? []).find((c) => c.id___ === t.catid);
+              const cat = (categories ?? []).find((c) => c.objid === t.catid);
               const amount = Number(t.amnts);
               return (
-                <tr key={t.id___} className="border-b hover:bg-gray-50">
+                <tr key={t.objid} className="border-b hover:bg-gray-50">
                   <td className="p-2">{t.dates}</td>
                   <td className="p-2">{cat?.cname ?? t.catid}</td>
                   <td className={`p-2 text-right font-mono ${amount >= 0 ? "text-green-600" : "text-red-600"}`}>
@@ -49,7 +49,7 @@ export default function DashboardPage() {
                   </td>
                   <td className="p-2 text-right">
                     <button
-                      onClick={() => deleteTransaction(t.id___)}
+                      onClick={() => deleteTransaction(t.objid)}
                       className="text-xs text-red-500 hover:underline"
                     >
                       削除

@@ -8,7 +8,7 @@ use validator::Validate;
 #[derive(Debug, Clone, Serialize, Deserialize, TS, sqlx::FromRow)]
 #[ts(export)]
 pub struct Category {
-    pub id___: Uuid,
+    pub objid: Uuid,
     pub ownid: Uuid,
     pub cname: String,
     pub ctype: String,

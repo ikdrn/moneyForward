@@ -40,7 +40,7 @@ pub async fn list_transactions(
             let rows = sqlx::query_as!(
                 Transaction,
                 r#"
-                SELECT id___, ownid, catid, amnts, dates, ctime
+                SELECT objid, ownid, catid, amnts, dates, ctime
                 FROM   TBL_TRANS
                 WHERE  ownid = $1
                 ORDER  BY dates DESC, ctime DESC
@@ -65,7 +65,6 @@ pub async fn create_transaction(
     Extension(user): Extension<AuthUser>,
     Json(body): Json<CreateTransactionRequest>,
 ) -> AppResult<impl IntoResponse> {
-    // バリデーション
     body.validate().map_err(|e| AppError::Validation(e.to_string()))?;
 
     let new_id = Uuid::new_v4();
@@ -78,9 +77,9 @@ pub async fn create_transaction(
             let row = sqlx::query_as!(
                 Transaction,
                 r#"
-                INSERT INTO TBL_TRANS (id___, ownid, catid, amnts, dates)
+                INSERT INTO TBL_TRANS (objid, ownid, catid, amnts, dates)
                 VALUES ($1, $2, $3, $4, $5)
-                RETURNING id___, ownid, catid, amnts, dates, ctime
+                RETURNING objid, ownid, catid, amnts, dates, ctime
                 "#,
                 new_id,
                 user.id,
@@ -106,8 +105,6 @@ pub async fn get_transaction(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<Uuid>,
 ) -> AppResult<impl IntoResponse> {
-    // 単件取得は参照のみ → 監査ログは残さない設計も可だが、
-    // 規約に従いすべての DB 操作を記録する
     let trans = with_audit(
         &pool,
         AuditContext { owner_id: user.id, role: &user.role },
@@ -116,9 +113,9 @@ pub async fn get_transaction(
             let row = sqlx::query_as!(
                 Transaction,
                 r#"
-                SELECT id___, ownid, catid, amnts, dates, ctime
+                SELECT objid, ownid, catid, amnts, dates, ctime
                 FROM   TBL_TRANS
-                WHERE  id___ = $1
+                WHERE  objid = $1
                   AND  ownid = $2
                 "#,
                 id,
@@ -151,10 +148,9 @@ pub async fn update_transaction(
         AuditContext { owner_id: user.id, role: &user.role },
         AuditAction::update_trans(id),
         |tx| Box::pin(async move {
-            // 所有確認 (RLS でも防がれるが明示的にチェック)
             let existing = sqlx::query_as!(
                 Transaction,
-                "SELECT id___, ownid, catid, amnts, dates, ctime FROM TBL_TRANS WHERE id___ = $1 AND ownid = $2",
+                "SELECT objid, ownid, catid, amnts, dates, ctime FROM TBL_TRANS WHERE objid = $1 AND ownid = $2",
                 id, user.id,
             )
             .fetch_optional(&mut **tx)
@@ -170,9 +166,9 @@ pub async fn update_transaction(
                 r#"
                 UPDATE TBL_TRANS
                 SET    catid = $1, amnts = $2, dates = $3
-                WHERE  id___ = $4
+                WHERE  objid = $4
                   AND  ownid = $5
-                RETURNING id___, ownid, catid, amnts, dates, ctime
+                RETURNING objid, ownid, catid, amnts, dates, ctime
                 "#,
                 new_catid,
                 new_amnts,
@@ -204,7 +200,7 @@ pub async fn delete_transaction(
         AuditAction::delete_trans(id),
         |tx| Box::pin(async move {
             let result = sqlx::query!(
-                "DELETE FROM TBL_TRANS WHERE id___ = $1 AND ownid = $2",
+                "DELETE FROM TBL_TRANS WHERE objid = $1 AND ownid = $2",
                 id,
                 user.id,
             )

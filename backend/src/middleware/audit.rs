@@ -61,13 +61,13 @@ where
     sqlx::query(&format!("SET LOCAL ROLE {}", ctx.role))
         .execute(&mut *tx)
         .await
-        .map_err(|e| AppError::Database(e))?;
+        .map_err(AppError::Database)?;
 
     sqlx::query("SELECT set_config('app.current_user_id', $1, true)")
         .bind(ctx.owner_id.to_string())
         .execute(&mut *tx)
         .await
-        .map_err(|e| AppError::Database(e))?;
+        .map_err(AppError::Database)?;
 
     // ── ビジネスロジック実行 ────────────────────────────────
     let result = op(&mut tx).await?;
@@ -76,7 +76,7 @@ where
     // ビジネスロジックと同一トランザクション内 → 原子性が保証される
     sqlx::query!(
         r#"
-        INSERT INTO TBL_AUDIT (id___, ownid, actio, ctime)
+        INSERT INTO TBL_AUDIT (objid, ownid, actio, ctime)
         VALUES (gen_random_uuid(), $1, $2, NOW())
         "#,
         ctx.owner_id,
@@ -84,7 +84,7 @@ where
     )
     .execute(&mut *tx)
     .await
-    .map_err(|e| AppError::Database(e))?;
+    .map_err(AppError::Database)?;
 
     tx.commit().await?;
 

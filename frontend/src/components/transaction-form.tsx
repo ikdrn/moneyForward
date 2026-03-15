@@ -46,7 +46,7 @@ export function TransactionForm({ categories, onSuccess }: Props) {
         >
           <option value="">選択してください</option>
           {categories.map((c) => (
-            <option key={c.id___} value={c.id___}>
+            <option key={c.objid} value={c.objid}>
               [{c.ctype === "income" ? "収入" : "支出"}] {c.cname}
             </option>
           ))}
