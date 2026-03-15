@@ -4,6 +4,8 @@ import { verifyAuth } from "@/lib/auth";
 import { withAudit, AuditAction } from "@/lib/audit";
 import { errorResponse } from "@/lib/errors";
 
+export const dynamic = 'force-dynamic';
+
 const UpdateAssetSchema = z.object({
   aname: z.string().min(1).max(100).optional(),
   atype: z.enum(["bank", "fund"]).optional(),

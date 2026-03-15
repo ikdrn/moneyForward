@@ -5,6 +5,8 @@ import { verifyAuth } from "@/lib/auth";
 import { withAudit, AuditAction } from "@/lib/audit";
 import { errorResponse } from "@/lib/errors";
 
+export const dynamic = 'force-dynamic';
+
 type Params = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, { params }: Params) {

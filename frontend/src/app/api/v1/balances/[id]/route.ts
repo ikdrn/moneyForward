@@ -4,6 +4,8 @@ import { verifyAuth } from "@/lib/auth";
 import { withAudit, AuditAction } from "@/lib/audit";
 import { errorResponse } from "@/lib/errors";
 
+export const dynamic = 'force-dynamic';
+
 const UpdateBalanSchema = z.object({
   amnts: z.string().refine((v) => !isNaN(Number(v)) && Number(v) >= 0).optional(),
   dates: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
