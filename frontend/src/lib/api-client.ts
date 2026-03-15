@@ -7,9 +7,8 @@ import type {
   CreateCategoryRequest,
 } from "@/types/bindings";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
-
-export const apiClient = axios.create({ baseURL: BASE_URL });
+// Next.js API Routes が同一オリジンにあるので相対パスで良い
+export const apiClient = axios.create({ baseURL: "/api/v1" });
 
 // JWT を localStorage から自動付与
 apiClient.interceptors.request.use((config) => {
