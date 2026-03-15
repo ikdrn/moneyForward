@@ -50,9 +50,24 @@ export async function withAudit<T>(
 }
 
 export const AuditAction = {
+  // TBL_TRANS
   listTrans:   ()           => "LIST_TRANS:all",
   getTrans:    (id: string) => `GET_TRANS:${id}`,
   createTrans: (id: string) => `CREATE_TRANS:${id}`,
   updateTrans: (id: string) => `UPDATE_TRANS:${id}`,
   deleteTrans: (id: string) => `DELETE_TRANS:${id}`,
+  // TBL_ASSET
+  listAsset:   ()                    => "LIST_ASSET:all",
+  getAsset:    (id: string)          => `GET_ASSET:${id}`,
+  createAsset: (id: string)          => `CREATE_ASSET:${id}`,
+  updateAsset: (id: string)          => `UPDATE_ASSET:${id}`,
+  deleteAsset: (id: string)          => `DELETE_ASSET:${id}`,
+  // TBL_BALAN
+  listBalan:   (astid: string | null) => `LIST_BALAN:${astid ?? "all"}`,
+  getBalan:    (id: string)           => `GET_BALAN:${id}`,
+  createBalan: (id: string)           => `CREATE_BALAN:${id}`,
+  updateBalan: (id: string)           => `UPDATE_BALAN:${id}`,
+  deleteBalan: (id: string)           => `DELETE_BALAN:${id}`,
+  // 資産推移
+  getTrend:    ()           => "GET_TREND:all",
 } as const;
