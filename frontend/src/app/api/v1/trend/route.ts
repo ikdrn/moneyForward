@@ -1,24 +1,13 @@
-// GET /api/v1/trend  — 資産推移データ取得
-//
-// 集計ロジック:
-//   各 dates ごとに、全資産の残高を SUM する
-//   種別 (bank / fund) 別にも集計 → フロントのグラフ描画に利用
-//
-// レスポンス: TrendPoint[]
-//   { dates, total, bktot, fdtot }
-//   ※ 全てのフィールドを 5 文字固定で統一
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "@/lib/auth";
 import { withAudit, AuditAction } from "@/lib/audit";
 import { errorResponse } from "@/lib/errors";
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
-    const user = await verifyAuth(req);
+    const user = await verifyAuth();
 
     const rows = await withAudit(user.id, user.role, AuditAction.getTrend(), async (client) => {
-      // ── 時系列集計クエリ ───────────────────────────────────
-      // dates ごとに bank 合計・fund 合計・全体合計を集計
       const { rows } = await client.query(
         `SELECT
            b.dates,

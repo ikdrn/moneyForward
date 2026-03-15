@@ -1,19 +1,16 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import { Providers } from "./providers";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
-  title: "家計簿アプリ",
-  description: "マルチテナント型家計簿",
+  title:       "資産管理",
+  description: "銀行・証券口座を一元管理する次世代型資産管理システム",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja">
-      <body className={inter.className}>
+      <body className="bg-slate-50 text-slate-900 antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>
