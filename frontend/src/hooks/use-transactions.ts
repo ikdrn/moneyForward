@@ -13,13 +13,6 @@ export function useTransactions() {
   return useQuery({ queryKey: QUERY_KEY, queryFn: transactionApi.list });
 }
 
-export function useTransaction(id: string) {
-  return useQuery({
-    queryKey: [...QUERY_KEY, id],
-    queryFn:  () => transactionApi.get(id),
-    enabled:  !!id,
-  });
-}
 
 export function useCreateTransaction() {
   const qc = useQueryClient();
