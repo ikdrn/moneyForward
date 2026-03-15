@@ -4,6 +4,7 @@ mod error;
 mod handlers;
 mod middleware;
 mod models;
+mod sync;
 
 use axum::{
     middleware as axum_middleware,
@@ -49,6 +50,12 @@ async fn main() -> anyhow::Result<()> {
         .with_state(pool)
         .layer(CorsLayer::permissive())   // 本番では origin を限定すること
         .layer(TraceLayer::new_for_http());
+
+    // ── 自動同期ジョブ起動 (バックグラウンド) ───────────────
+    let sync_pool = pool.clone();
+    tokio::spawn(async move {
+        sync::job::run_sync_loop(sync_pool).await;
+    });
 
     // ── サーバ起動 ──────────────────────────────────────────
     let addr = format!("0.0.0.0:{}", config.port);

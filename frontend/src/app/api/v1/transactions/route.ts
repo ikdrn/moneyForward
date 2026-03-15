@@ -4,7 +4,6 @@ import { verifyAuth } from "@/lib/auth";
 import { withAudit, AuditAction } from "@/lib/audit";
 import { errorResponse } from "@/lib/errors";
 
-// ── バリデーションスキーマ ────────────────────────────────────
 const CreateSchema = z.object({
   catid: z.string().uuid(),
   amnts: z.string().refine((v) => !isNaN(Number(v)) && Number(v) !== 0, {
@@ -13,10 +12,9 @@ const CreateSchema = z.object({
   dates: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
-// ── GET /api/v1/transactions ─────────────────────────────────
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
-    const user = await verifyAuth(req);
+    const user = await verifyAuth();
 
     const rows = await withAudit(user.id, user.role, AuditAction.listTrans(), async (client) => {
       const { rows } = await client.query(
@@ -35,11 +33,10 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// ── POST /api/v1/transactions ─────────────────────────────────
 export async function POST(req: NextRequest) {
   try {
-    const user = await verifyAuth(req);
-    const body = CreateSchema.parse(await req.json());
+    const user  = await verifyAuth();
+    const body  = CreateSchema.parse(await req.json());
     const newId = crypto.randomUUID();
 
     const row = await withAudit(user.id, user.role, AuditAction.createTrans(newId), async (client) => {
