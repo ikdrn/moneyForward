@@ -4,6 +4,8 @@ import { verifyAuth } from "@/lib/auth";
 import { withAudit, AuditAction } from "@/lib/audit";
 import { errorResponse } from "@/lib/errors";
 
+export const dynamic = 'force-dynamic';
+
 const UpdateSchema = z.object({
   catid: z.string().uuid().optional(),
   amnts: z.string().refine((v) => !isNaN(Number(v)) && Number(v) !== 0).optional(),

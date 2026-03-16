@@ -6,6 +6,8 @@ import { verifyAuth } from "@/lib/auth";
 import { withAudit, AuditAction } from "@/lib/audit";
 import { errorResponse } from "@/lib/errors";
 
+export const dynamic = 'force-dynamic';
+
 const CreateSchema = z.object({
   iname: z.string().min(1).max(100),
   itype: z.enum(["bank", "brok", "card"]),
