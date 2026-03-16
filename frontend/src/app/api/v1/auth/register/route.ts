@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { pool, withAudit } from "@/lib/db";
+import { pool } from "@/lib/db";
 
 // Supabase Admin Client (service_role — サーバー側のみ)
 function adminClient() {
@@ -41,15 +41,15 @@ export async function POST(req: NextRequest) {
     const userId = data.user.id;
 
     // TBL_USERS にも同期登録 (RLS の ownid 参照用)
-    await withAudit(pool, userId, "register", async (client) => {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
       await client.query(
         `INSERT INTO TBL_USERS (objid, email, roles)
          VALUES ($1, $2, 'app_user')
          ON CONFLICT (objid) DO NOTHING`,
         [userId, email],
       );
-
-      // 無料プランを付与
       await client.query(
         `INSERT INTO TBL_SUBSC (ownid, plnid, state)
          SELECT $1, objid, 'activ'
@@ -57,7 +57,13 @@ export async function POST(req: NextRequest) {
          ON CONFLICT DO NOTHING`,
         [userId],
       );
-    });
+      await client.query("COMMIT");
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
 
     return NextResponse.json({ id: userId }, { status: 201 });
   } catch (err) {

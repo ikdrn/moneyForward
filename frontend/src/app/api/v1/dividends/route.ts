@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 // GET  /api/v1/dividends  — 配当金履歴 (Advance+)
 // POST /api/v1/dividends  — 配当金追加
 import { NextRequest, NextResponse } from "next/server";
-import { pool, withAudit } from "@/lib/db";
+import { pool } from "@/lib/db";
+import { withAudit } from "@/lib/audit";
 import { verifyAuth } from "@/lib/auth";
 import { getPlanLimits, isAdvance } from "@/lib/plan";
 
@@ -50,6 +51,7 @@ export async function GET(_req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const { id: userId, role } = await verifyAuth();
+
     const plan = await getPlanLimits(userId);
 
     if (!isAdvance(plan.pname)) {
@@ -65,7 +67,7 @@ export async function POST(req: NextRequest) {
     }
 
     const newId = crypto.randomUUID();
-    const row = await withAudit(pool, userId, `createDivid:${newId}`, async (client) => {
+    const row = await withAudit(userId, role, `createDivid:${newId}`, async (client) => {
       const { rows } = await client.query(
         `INSERT INTO TBL_DIVID (objid, ownid, astid, amnts, dates, notes)
          VALUES ($1, $2, $3, $4, $5, $6)
