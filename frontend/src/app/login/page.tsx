@@ -26,12 +26,19 @@ export default function LoginPage() {
         router.push("/dashboard");
         router.refresh();
       } else {
-        const { error } = await supabase.auth.signUp({
-          email, password,
-          options: { emailRedirectTo: `${location.origin}/auth/callback` },
+        // メール確認なし登録 (Admin API経由)
+        const res = await fetch("/api/v1/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
         });
-        if (error) throw error;
-        setError("確認メールを送信しました。メールを確認してください。");
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error ?? "登録に失敗しました");
+        // 登録成功 → そのままログイン
+        const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (loginErr) throw loginErr;
+        router.push("/dashboard");
+        router.refresh();
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "エラーが発生しました");

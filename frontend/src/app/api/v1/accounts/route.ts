@@ -5,6 +5,8 @@ import { z } from "zod";
 import { verifyAuth } from "@/lib/auth";
 import { withAudit, AuditAction } from "@/lib/audit";
 import { errorResponse } from "@/lib/errors";
+import { getPlanLimits } from "@/lib/plan";
+import { pool } from "@/lib/db";
 
 export const dynamic = 'force-dynamic';
 
@@ -57,6 +59,21 @@ export async function POST(req: NextRequest) {
     const body  = CreateSchema.parse(await req.json());
     const newId = crypto.randomUUID();
     const astId = crypto.randomUUID();
+
+    // 口座数制限チェック (free = 4件まで)
+    const plan = await getPlanLimits(user.id);
+    if (plan.acclm !== -1) {
+      const { rows: cnt } = await pool.query(
+        `SELECT COUNT(*) AS c FROM TBL_ACCTS WHERE ownid = $1`,
+        [user.id],
+      );
+      if (Number(cnt[0].c) >= plan.acclm) {
+        return NextResponse.json(
+          { error: `無料プランは口座${plan.acclm}件まで連携できます。プレミアムにアップグレードすると無制限に追加できます。`, upgrade: true },
+          { status: 403 },
+        );
+      }
+    }
 
     // itype → atype マッピング (TBL_ASSET は bank/fund のみ)
     const atype = body.itype === "brok" ? "fund" : "bank";
