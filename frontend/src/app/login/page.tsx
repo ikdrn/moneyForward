@@ -22,9 +22,8 @@ export default function LoginPage() {
     try {
       if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) throw new Error(error.message);
         router.push("/dashboard");
-        router.refresh();
       } else {
         // メール確認なし登録 (Admin API経由)
         const res = await fetch("/api/v1/auth/register", {
@@ -36,9 +35,8 @@ export default function LoginPage() {
         if (!res.ok) throw new Error(json.error ?? "登録に失敗しました");
         // 登録成功 → そのままログイン
         const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
-        if (loginErr) throw loginErr;
+        if (loginErr) throw new Error(loginErr.message);
         router.push("/dashboard");
-        router.refresh();
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "エラーが発生しました");
